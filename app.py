@@ -12,7 +12,7 @@ from PIL import Image
 def load_food_model():
     model_path = "custom_cnn_image_classifier.keras"
     url = "https://drive.google.com/file/d/1ka-TzZ2ss4jZLZWToPcRVpBxtVltwmDO/view?usp=drive_linkk"
-    gdown.download(url, model_path, quiet = False)
+    gdown.download(url, quiet = False)
     
     return load_model(model_path)
 
