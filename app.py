@@ -10,8 +10,8 @@ from PIL import Image
 # Load Keras Model
 @st.cache_resource
 def load_food_model():
-    model_path = "custom_cnn_image_classifier.h5"
-    url = "https://drive.google.com/file/d/1ps4xnF74jzV8YzHgDzKeLlnFcQcHwTJO/view?usp=drive_link"
+    model_path = "custom_cnn_image_classifier.keras"
+    url = "https://drive.google.com/file/d/1ka-TzZ2ss4jZLZWToPcRVpBxtVltwmDO/view?usp=drive_linkk"
     gdown.download(url, model_path, quiet = False)
     
     return load_model(model_path)
