@@ -1,21 +1,81 @@
-import os
-import gdown
-import streamlit as st
+%%writefile app.py
+
+import torch
 import numpy as np
-import tensorflow as tf
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import image
+import torch.nn as nn
+import torch.optim as optim
+import torchvision.transforms as transforms
+from PIL import Image
+import streamlit as st
+
+# Define the same model architecture (must match the saved model)
+class FoodDetectionCNN(nn.Module):
+    def __init__(self):
+        super(FoodDetectionCNN, self).__init__()
+        self.conv_layers = nn.Sequential(
+            nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+
+            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+
+            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+
+            nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2)
+        )
+
+        self.fc_layers = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(128 * 9 * 9, 512),  # Adjust shape based on input size
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(512, 1),  # Binary classification
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        x = self.conv_layers(x)
+        x = self.fc_layers(x)
+        return x
+
+
+
+
+# Image preprocessing function
+def preprocess_image(image):
+    transform = transforms.Compose([
+        transforms.Resize((150, 150)),  # Resize to model's input size
+        transforms.ToTensor(),
+        transforms.Normalize([0.5], [0.5])  # Normalize to match training data
+    ])
+    return transform(image).unsqueeze(0)  # Add batch dimension
+def predict(image):
+    image = preprocess_image(image)
+    with torch.no_grad():
+        output = model(image)
+        probabilities = torch.softmax(output, dim=1)
+        predicted_class = torch.argmax(probabilities, dim=1).item()
+    return predicted_class, probabilities.squeeze().tolist()
+import streamlit as st
 from PIL import Image
 
-# Load Keras Model
+
+
+
+# Load PyTorch Model
 @st.cache_resource
 def load_food_model():
-    model_path = "custom_cnn_image_classifier.keras"
-    url = "https://drive.google.com/file/d/1ka-TzZ2ss4jZLZWToPcRVpBxtVltwmDO/view?usp=drive_linkk"
-    gdown.download(url, quiet = False)
-    
-    return load_model(model_path)
-
+# Load model
+  model = FoodDetectionCNN()
+  model.load_state_dict(torch.load("/content/modelnew.pth", map_location=torch.device("cpu")))
+  model.eval()
+  return model
 
 model = load_food_model()
 
@@ -26,7 +86,7 @@ class_info = {
 }
 
 st.title("Food Image Classifier 🍽️")
-st.write("Upload an image of food, and the model will predict its category (White or Jellof Rice Detection)")
+st.write("Upload an image of food, and the model will predict its category (White or Jollof Rice Detection)")
 
 # File uploader
 uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
@@ -35,22 +95,19 @@ if uploaded_file is not None:
     img = Image.open(uploaded_file)
     st.image(img, caption="Uploaded Image", use_container_width=True)
 
-    # Preprocess Image
-    img = img.resize((150, 150))  # Adjust size based on model input shape
-    img_array = image.img_to_array(img)
-    img_array = np.expand_dims(img_array, axis=0)
-    img_array = img_array / 255.0  # Normalize
+    img_tensor = preprocess_image(img)
 
     # Make Prediction
-    predictions = model.predict(img_array)
-
+    with torch.no_grad():
+        predictions = model(img_tensor)
+        
     # Check if binary or multi-class classification
     if predictions.shape[1] == 1:  # Binary classification
-        predicted_classes = (predictions > 0.5).astype('int32').flatten()
+        predicted_classes = (predictions > 0.5).int().flatten()
     else:  # Multi-class classification
-        predicted_classes = np.argmax(predictions, axis=1)
+        predicted_classes = torch.argmax(predictions, dim=1)
 
-    predicted_class = predicted_classes[0]
+    predicted_class = predicted_classes.item()
 
     # Retrieve food name and description
     if predicted_class in class_info:
@@ -59,4 +116,4 @@ if uploaded_file is not None:
         st.write(f"### 🍲 Prediction: {food_name}")
         st.write(f"📖 {food_description}")
     else:
-        st.write("⚠️ Unknown food detected. The model is trained to detect only White/Jello Rice")
+        st.write("⚠️ Unknown food detected. The model is trained to detect only White/Jollof Rice")
