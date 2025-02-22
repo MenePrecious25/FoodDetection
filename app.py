@@ -11,9 +11,9 @@ from PIL import Image
 @st.cache_resource
 def load_food_model():
     model_path = "custom_cnn_image_classifier.h5"
-    if not os.path.exists(model_path)
-    url = "https://drive.google.com/file/d/1ps4xnF74jzV8YzHgDzKeLlnFcQcHwTJO/view?usp=drive_link"
-    gdown.download(url, model_path, quiet = False)
+    if not os.path.exists(model_path):
+        url = "https://drive.google.com/file/d/1ps4xnF74jzV8YzHgDzKeLlnFcQcHwTJO/view?usp=drive_link"
+        gdown.download(url, model_path, quiet = False)
     
     return load_model(model_path)
 
