@@ -73,7 +73,7 @@ from PIL import Image
 def load_food_model():
 # Load model
   model = FoodDetectionCNN()
-  model.load_state_dict(torch.load("/content/modelnew.pth", map_location=torch.device("cpu")))
+  model.load_state_dict(torch.load("modelnew.pth", map_location=torch.device("cpu")))
   model.eval()
   return model
 
