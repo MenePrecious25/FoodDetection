@@ -1,4 +1,5 @@
-%%writefile app.py
+import os
+import gdown
 import streamlit as st
 import numpy as np
 import tensorflow as tf
@@ -9,8 +10,13 @@ from PIL import Image
 # Load Keras Model
 @st.cache_resource
 def load_food_model():
-    model = load_model("/content/custom_cnn_image_classifier.h5") 
-    return model
+    model_path = "custom_cnn_image_classifier.h5"
+    if not os.path.exists(model_path)
+    url = "https://drive.google.com/file/d/1ps4xnF74jzV8YzHgDzKeLlnFcQcHwTJO/view?usp=drive_link"
+    gdown.download(url, model_path, quiet = False)
+    
+    return load_model(model_path)
+
 
 model = load_food_model()
 
